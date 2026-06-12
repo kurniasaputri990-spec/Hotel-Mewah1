@@ -1,13 +1,13 @@
-FROM php:8.2-apache
+FROM dunglas/frankenphp:php8.4-bookworm
 
-RUN docker-php-ext-install mysqli pdo pdo_mysql
+RUN install-php-extensions mysqli pdo_mysql \
+    && apt-get remove -y apache2 apache2-utils libapache2-mod-php* 2>/dev/null || true \
+    && apt-get autoremove -y \
+    && apt-get clean
 
-# Disable semua MPM dulu, lalu aktifkan hanya prefork
-RUN a2dismod mpm_event mpm_worker 2>/dev/null || true && \
-    a2enmod mpm_prefork
+WORKDIR /app
+COPY . /app
 
-RUN a2enmod rewrite
+ENV SERVER_NAME=":8080"
 
-COPY . /var/www/html/
-
-EXPOSE 80
+CMD ["frankenphp", "run", "--config", "/app/Caddyfile"]
